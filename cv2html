@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+usage() {
+    this=$1
+    cat <<EOF
+$this: output cv markdown file to html file and append styles.
+
+Usage: $this path/to/cvfile.md path/to/output.html
+EOF
+    exit 2
+}
+check_dep() {
+    which showdown >/dev/null || (echo "please install showodnw: npm install -g showdown" && exit 1)
+    which tidy >/dev/null || (echo "please install tidy: brew install tidy" && exit 1)
+}
+check_args() {
+    if [ $# -ne 2 ]; then
+        usage "$0"
+    fi
+
+    if [ -r $2 ]; then
+        echo "$2 already exist. remove!"
+        rm $2
+    fi
+}
+output() {
+    tidy="tidy -im "
+    showdown="showdown -q makehtml -i "
+    markdown=$1
+    output=$2
+    echo "translate $1 to $2"
+    test -r tmp.html && rm tmp.html
+    cat prefix.html > tmp.html
+    $showdown $markdown >> tmp.html
+    cat suffix.html >> tmp.html
+    $tidy tmp.html &>/dev/null
+    mv tmp.html $output
+    unset markdown
+    unset output
+    unset showdown
+    unset tidy
+    exit 0
+}
+
+check_args "$@"
+check_dep
+output $1 $2
